@@ -1057,6 +1057,8 @@ LoadRes Memory::loadROM(std::string const &romfile, bool const forceDmg, bool co
 	psg_.init(cart_.isCgb());
 	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
 	interrupter_.setGameShark(std::string());
+    
+    printf("!!!!!!!! loading ROM");
 
 	return LOADRES_OK;
 }

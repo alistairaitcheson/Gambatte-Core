@@ -20,7 +20,17 @@
 #include "memory.h"
 #include "savestate.h"
 
+#include <cstdlib>
+#include <iostream>
+#include <ctime>
+
 namespace gambatte {
+    
+static int glitchNodes[0xFFFF];
+static bool initialisedGlitch = false;
+static int glitchCount = 0;
+    static int agaCycleCounter = 0;
+
 
 CPU::CPU()
 : mem_(Interrupter(sp, pc_))
@@ -40,6 +50,11 @@ CPU::CPU()
 , l(0x4D)
 , skip_(false)
 {
+    std::srand(std::time(0));
+    for (int i = 0; i < 0xFFFF; i++) {
+        glitchNodes[i] = -1;
+    }
+    initialisedGlitch = true;
 }
 
 long CPU::runFor(unsigned long const cycles) {
@@ -52,9 +67,10 @@ long CPU::runFor(unsigned long const cycles) {
 
 	return csb;
 }
+    
 
 enum { hf2_hcf = 0x200, hf2_subf = 0x400, hf2_incf = 0x800 };
-
+    
 static unsigned updateHf2FromHf1(unsigned const hf1, unsigned hf2) {
 	unsigned lhs  = hf1 & 0xF;
 	unsigned rhs = (hf2 & 0xF) + (hf2 >> 8 & 1);
@@ -492,6 +508,28 @@ void CPU::process(unsigned long const cycles) {
 
 	unsigned char a = a_;
 	unsigned long cycleCounter = cycleCounter_;
+    
+    agaCycleCounter++;
+
+//    WRITE(0xC000 + (std::rand() % 0x1000), std::rand() % 0xFF);
+    if (rand() % 60 == 2){//(glitchCount < 3){
+        int index = 0xC000 + (std::rand() % 0x2000);
+//        WRITE(index, std::rand() % 0x100);
+//        if (glitchNodes[index] == -1)
+//        {
+//            glitchNodes[index] = std::rand() % 0x100;
+//            glitchCount ++;
+//        }
+    }
+    
+    if (initialisedGlitch) {
+        for (int i = 0; i < 0xFFFF; i++) {
+            if (glitchNodes[i] != -1)
+            {
+                WRITE(i, glitchNodes[i]);
+            }
+        }
+    }
 
 	while (mem_.isActive()) {
 		unsigned short pc = pc_;
